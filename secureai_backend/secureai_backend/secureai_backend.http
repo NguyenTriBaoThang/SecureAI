@@ -1,0 +1,6 @@
+@secureai_backend_HostAddress = http://localhost:5016
+
+GET {{secureai_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

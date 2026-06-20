@@ -1,0 +1,68 @@
+{
+  "project": "SecureAI",
+  "model_version": "secureai_bilstm_attention_v1",
+  "architecture": "BiLSTM + Self-Attention (PyTorch)",
+  "proposed_model": "BiLSTM_Attention",
+  "selected_model": "BiLSTM_Attention",
+  "label_classes": [
+    "benign",
+    "defacement",
+    "malware",
+    "phishing"
+  ],
+  "num_classes": 4,
+  "max_len": 50,
+  "max_words": 200,
+  "embed_dim": 128,
+  "hidden_dim": 128,
+  "num_layers": 2,
+  "epochs_trained": 30,
+  "dataset_size": 319677,
+  "train_size": 255741,
+  "test_size": 63936,
+  "all_metrics": [
+    {
+      "model_name": "BiLSTM_Attention",
+      "accuracy": 0.9379,
+      "f1_weighted": 0.9366,
+      "f1_macro": 0.9181,
+      "roc_auc": 0.9854
+    },
+    {
+      "model_name": "XGBoost",
+      "accuracy": 0.9106,
+      "f1_weighted": 0.9064,
+      "f1_macro": 0.8804,
+      "roc_auc": 0.9758
+    },
+    {
+      "model_name": "LightGBM",
+      "accuracy": 0.9182,
+      "f1_weighted": 0.9211,
+      "f1_macro": 0.9086,
+      "roc_auc": 0.9848
+    },
+    {
+      "model_name": "RandomForest",
+      "accuracy": 0.8383,
+      "f1_weighted": 0.8458,
+      "f1_macro": 0.8214,
+      "roc_auc": 0.9432
+    }
+  ],
+  "best_metrics": {
+    "model_name": "BiLSTM_Attention",
+    "accuracy": 0.9379,
+    "f1_weighted": 0.9366,
+    "f1_macro": 0.9181,
+    "roc_auc": 0.9854
+  },
+  "training_history": {
+    "final_train_loss": 0.0906,
+    "final_val_loss": 0.183,
+    "final_train_acc": 0.9663,
+    "final_val_acc": 0.9386
+  },
+  "generated_at": "2026-05-10T09:04:46.547913+07:00",
+  "device": "cpu"
+}
