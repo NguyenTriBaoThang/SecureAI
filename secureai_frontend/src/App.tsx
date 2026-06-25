@@ -1,14 +1,16 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Layout }              from './components/layout/Layout'
 import { LoginPage }           from './pages/Auth/LoginPage'
 import { DashboardPage }       from './pages/Dashboard/DashboardPage'
 import { ThreatsPage }         from './pages/Threats/ThreatsPage'
 import { ThreatDetailPage }    from './pages/Threats/ThreatDetailPage'
 import { AlertsPage }          from './pages/Alerts/AlertsPage'
+import { IncidentsPage }       from './pages/Incidents/IncidentsPage'
 import { EmailAnalyzePage }    from './pages/Email/EmailAnalyzePage'
 import { BaselineComparePage } from './pages/Baseline/BaselineComparePage'
 import { UsersPage }           from './pages/Users/UsersPage'
 import { StatisticsPage }      from './pages/Statistics/StatisticsPage'
+import { RuleEnginePage }      from './pages/Rules/RuleEnginePage'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('token')
@@ -25,9 +27,11 @@ export default function App() {
           <Route path="threats"     element={<ThreatsPage />} />
           <Route path="threats/:id" element={<ThreatDetailPage />} />
           <Route path="alerts"      element={<AlertsPage />} />
+          <Route path="incidents"   element={<IncidentsPage />} />
           <Route path="email"       element={<EmailAnalyzePage />} />
           <Route path="baseline"    element={<BaselineComparePage />} />
           <Route path="statistics"  element={<StatisticsPage />} />
+          <Route path="rules"       element={<RuleEnginePage />} />
           <Route path="users"       element={<UsersPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

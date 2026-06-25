@@ -1,7 +1,8 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using secureai_backend.Data;
 using secureai_backend.DTOs.ML;
+using secureai_backend.DTOs.RuleEngine;
 using secureai_backend.DTOs.Threat;
 using secureai_backend.Models.Entities;
 using secureai_backend.Models.Enums;
@@ -12,24 +13,20 @@ public class ThreatService(
     AppDbContext db,
     MlBridgeService mlBridge,
     AlertService alertService,
+    IncidentService incidentService,
+    DecisionSupportService decisionSupport,
+    ThreatIntelService threatIntel,
+    RuleEngineService ruleEngine,
     AuditService auditService)
 {
-    // ── 1. Phân tích URL ─────────────────────────────────────────────────────
     public async Task<ThreatDto> AnalyzeAsync(string url, string? userId)
     {
-        // Gọi Python ML API
         var ml = await mlBridge.PredictAsync(url);
+        var config = await ruleEngine.GetConfigAsync();
+        var enrichment = threatIntel.Analyze(url);
+        var ruleEvaluation = ruleEngine.Evaluate(ml.Label, ml.RiskScore, enrichment, config);
+        var severity = ResolveSeverity(ml.RiskScore, ruleEvaluation.Action);
 
-        // Risk score → severity
-        var severity = ml.RiskScore switch
-        {
-            >= 0.85 => ThreatSeverity.Critical,
-            >= 0.60 => ThreatSeverity.High,
-            >= 0.30 => ThreatSeverity.Medium,
-            _ => ThreatSeverity.Low
-        };
-
-        // Lưu threat vào DB
         var threat = new Threat
         {
             Url = url,
@@ -47,8 +44,7 @@ public class ThreatService(
         db.Threats.Add(threat);
         await db.SaveChangesAsync();
 
-        // Tự động tạo alert nếu rủi ro High hoặc Critical
-        if (severity >= ThreatSeverity.High)
+        if (ShouldCreateAlert(severity, ruleEvaluation, config))
         {
             var alertSev = severity == ThreatSeverity.Critical
                 ? AlertSeverity.Critical
@@ -57,30 +53,55 @@ public class ThreatService(
             await alertService.CreateAsync(
                 threat.Id,
                 alertSev,
-                $"[{ml.Label.ToUpper()}] {url} — Risk: {ml.RiskScore:P0}");
+                $"[{ruleEvaluation.Action.ToUpperInvariant()}] {ml.Label.ToUpperInvariant()} - Risk: {ml.RiskScore:P0} - {url}");
+        }
+
+        if (severity >= ThreatSeverity.High && threat.PredictedLabel != "benign")
+        {
+            await incidentService.CreateForThreatAsync(threat, userId);
         }
 
         if (userId != null)
+        {
             await auditService.LogAsync(userId, "ANALYZE_URL", threat.Id.ToString(), url);
+        }
 
-        return ToDto(threat, ml.TopAttention);
+        return await GetByIdAsync(threat.Id) ?? ToDto(threat, config, ml.TopAttention);
     }
 
-    // ── 2. Danh sách threats (filter + phân trang) ───────────────────────────
     public async Task<PagedResult<ThreatDto>> GetListAsync(ThreatListRequest req)
     {
-        var q = db.Threats.AsQueryable();
+        var config = await ruleEngine.GetConfigAsync();
+        var q = db.Threats
+            .Include(t => t.AnalystLabels)
+            .ThenInclude(l => l.Analyst)
+            .Include(t => t.Incidents)
+            .AsQueryable();
 
         if (!string.IsNullOrEmpty(req.Label))
+        {
             q = q.Where(t => t.PredictedLabel == req.Label);
+        }
+
         if (req.Status.HasValue)
+        {
             q = q.Where(t => t.Status == req.Status.Value);
+        }
+
         if (req.Severity.HasValue)
+        {
             q = q.Where(t => t.Severity == req.Severity.Value);
+        }
+
         if (req.From.HasValue)
+        {
             q = q.Where(t => t.DetectedAt >= req.From.Value);
+        }
+
         if (req.To.HasValue)
+        {
             q = q.Where(t => t.DetectedAt <= req.To.Value);
+        }
 
         var total = await q.CountAsync();
         var items = await q
@@ -89,36 +110,37 @@ public class ThreatService(
             .Take(req.PageSize)
             .ToListAsync();
 
-        return new PagedResult<ThreatDto>(
-            items.Select(t => ToDto(t)).ToList(),
-            total, req.Page, req.PageSize);
+        return new PagedResult<ThreatDto>(items.Select(t => ToDto(t, config)).ToList(), total, req.Page, req.PageSize);
     }
 
-    // ── 3. Chi tiết 1 threat ─────────────────────────────────────────────────
     public async Task<ThreatDto?> GetByIdAsync(Guid id)
     {
-        var t = await db.Threats.FindAsync(id);
-        return t == null ? null : ToDto(t);
+        var config = await ruleEngine.GetConfigAsync();
+        var threat = await db.Threats
+            .Include(t => t.AnalystLabels)
+            .ThenInclude(l => l.Analyst)
+            .Include(t => t.Incidents)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        return threat == null ? null : ToDto(threat, config);
     }
 
-    // ── 4. Cập nhật trạng thái ───────────────────────────────────────────────
     public async Task<ThreatDto> UpdateStatusAsync(Guid id, ThreatStatus status, string userId)
     {
         var threat = await db.Threats.FindAsync(id)
-            ?? throw new KeyNotFoundException($"Không tìm thấy threat {id}");
+            ?? throw new KeyNotFoundException($"Threat {id} not found");
 
         threat.Status = status;
         await db.SaveChangesAsync();
         await auditService.LogAsync(userId, "UPDATE_STATUS", id.ToString(), status.ToString());
 
-        return ToDto(threat);
+        return await GetByIdAsync(id) ?? ToDto(threat, await ruleEngine.GetConfigAsync());
     }
 
-    // ── 5. Analyst gán nhãn (feedback loop) ─────────────────────────────────
     public async Task<ThreatDto> LabelAsync(Guid id, string label, string? note, string userId)
     {
         var threat = await db.Threats.FindAsync(id)
-            ?? throw new KeyNotFoundException($"Không tìm thấy threat {id}");
+            ?? throw new KeyNotFoundException($"Threat {id} not found");
 
         db.AnalystLabels.Add(new AnalystLabel
         {
@@ -128,7 +150,6 @@ public class ThreatService(
             Note = note
         });
 
-        // Đồng bộ status theo label
         threat.Status = label switch
         {
             "confirmed" => ThreatStatus.Confirmed,
@@ -138,35 +159,77 @@ public class ThreatService(
         };
 
         await db.SaveChangesAsync();
+        await incidentService.ApplyThreatLabelAsync(id, label, userId, note);
         await auditService.LogAsync(userId, "LABEL_THREAT", id.ToString(), label);
 
-        return ToDto(threat);
+        return await GetByIdAsync(id) ?? ToDto(threat, await ruleEngine.GetConfigAsync());
     }
 
-    // ── 6. Archive (soft delete) ─────────────────────────────────────────────
     public async Task DeleteAsync(Guid id, string userId)
     {
         var threat = await db.Threats.FindAsync(id)
-            ?? throw new KeyNotFoundException($"Không tìm thấy threat {id}");
+            ?? throw new KeyNotFoundException($"Threat {id} not found");
 
         threat.Status = ThreatStatus.Archived;
         await db.SaveChangesAsync();
         await auditService.LogAsync(userId, "ARCHIVE_THREAT", id.ToString());
     }
 
-    // ── Helper: Entity → DTO ─────────────────────────────────────────────────
-    private static ThreatDto ToDto(Threat t, List<AttentionToken>? att = null)
+    private ThreatDto ToDto(Threat threat, RuleConfigurationDto config, List<AttentionToken>? attention = null)
     {
-        att ??= TryDeserializeAttention(t.TopAttentionJson);
+        attention ??= ThreatDtoMapper.DeserializeAttention(threat.TopAttentionJson);
+        var enrichment = threatIntel.Analyze(threat.Url);
+        var ruleEvaluation = ruleEngine.Evaluate(threat, enrichment, config);
+
         return new ThreatDto(
-            t.Id, t.Url, t.PredictedLabel, t.RiskScore,
-            t.BenignProb, t.PhishingProb, t.MalwareProb, t.DefacementProb,
-            att, t.Status, t.Severity, t.DetectedAt);
+            threat.Id,
+            threat.Url,
+            threat.PredictedLabel,
+            threat.RiskScore,
+            threat.BenignProb,
+            threat.PhishingProb,
+            threat.MalwareProb,
+            threat.DefacementProb,
+            attention,
+            threat.Status,
+            threat.Severity,
+            threat.DetectedAt,
+            ruleEvaluation,
+            enrichment,
+            decisionSupport.BuildDecision(threat, attention),
+            decisionSupport.BuildRiskExplanation(threat, attention),
+            ThreatDtoMapper.MapIncident(threat.Incidents),
+            ThreatDtoMapper.MapNotes(threat.AnalystLabels));
     }
 
-    private static List<AttentionToken> TryDeserializeAttention(string json)
+    private static ThreatSeverity ResolveSeverity(double riskScore, string ruleAction)
     {
-        try { return JsonSerializer.Deserialize<List<AttentionToken>>(json) ?? []; }
-        catch { return []; }
+        if (ruleAction == "Block")
+        {
+            return ThreatSeverity.Critical;
+        }
+
+        if (riskScore >= 0.85)
+        {
+            return ThreatSeverity.Critical;
+        }
+
+        if (riskScore >= 0.60 || ruleAction == "Review")
+        {
+            return ThreatSeverity.High;
+        }
+
+        if (riskScore >= 0.30)
+        {
+            return ThreatSeverity.Medium;
+        }
+
+        return ThreatSeverity.Low;
     }
+
+    private static bool ShouldCreateAlert(
+        ThreatSeverity severity,
+        RuleEvaluationDto ruleEvaluation,
+        RuleConfigurationDto config)
+        => config.AutoAlertEnabled && (severity >= ThreatSeverity.High || ruleEvaluation.Action == "Block");
 }

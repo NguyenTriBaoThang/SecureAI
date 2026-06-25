@@ -1,4 +1,4 @@
-namespace secureai_backend.DTOs.Dashboard;
+﻿namespace secureai_backend.DTOs.Dashboard;
 
 public record DashboardSummaryDto(
     int TotalThreats,
@@ -6,5 +6,7 @@ public record DashboardSummaryDto(
     int UnreadAlerts,
     int CriticalAlerts,
     int PendingReview,
+    int OpenIncidents,
+    int InvestigatingAlerts,
     LabelBreakdownDto LabelBreakdown
 );

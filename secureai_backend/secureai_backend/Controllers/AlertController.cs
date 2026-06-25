@@ -1,3 +1,4 @@
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using secureai_backend.DTOs.Alert;
@@ -11,17 +12,16 @@ namespace secureai_backend.Controllers;
 [Authorize]
 public class AlertController(AlertService alertService) : ControllerBase
 {
-    /// <summary>Danh sách alerts — filter theo severity / unread</summary>
+    private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
     [HttpGet]
     public async Task<ActionResult<PagedResult<AlertDto>>> GetList([FromQuery] AlertListRequest req)
         => Ok(await alertService.GetListAsync(req));
 
-    /// <summary>Số alert chưa đọc — dùng cho badge notification trên React</summary>
     [HttpGet("unread-count")]
     public async Task<ActionResult<int>> GetUnreadCount()
         => Ok(await alertService.GetUnreadCountAsync());
 
-    /// <summary>Đánh dấu 1 alert đã đọc</summary>
     [HttpPatch("{id:guid}/read")]
     public async Task<IActionResult> MarkRead(Guid id)
     {
@@ -33,7 +33,17 @@ public class AlertController(AlertService alertService) : ControllerBase
         catch (KeyNotFoundException) { return NotFound(); }
     }
 
-    /// <summary>Đánh dấu tất cả alerts đã đọc</summary>
+    [HttpPatch("{id:guid}/status")]
+    [Authorize(Roles = "Admin,Analyst")]
+    public async Task<ActionResult<AlertDto>> UpdateStatus(Guid id, [FromBody] UpdateAlertStatusRequest req)
+    {
+        try
+        {
+            return Ok(await alertService.UpdateStatusAsync(id, req.Status, req.Note, UserId));
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+    }
+
     [HttpPatch("read-all")]
     public async Task<IActionResult> MarkAllRead()
     {

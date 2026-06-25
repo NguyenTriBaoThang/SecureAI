@@ -1,15 +1,17 @@
-import { NavLink } from 'react-router-dom'
+﻿import { NavLink } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { alertApi } from '../../api/alertApi'
 
 const navItems = [
-  { to: '/',           label: 'Dashboard',   icon: '📊' },
-  { to: '/threats',    label: 'Threats',     icon: '🔍' },
-  { to: '/alerts',     label: 'Alerts',      icon: '🔔' },
-  { to: '/email',      label: 'Email',       icon: '📧' },
-  { to: '/baseline',   label: 'Baseline',    icon: '📈' },
-  { to: '/statistics', label: 'Statistics',  icon: '📉' },
-  { to: '/users',      label: 'Users',       icon: '👥' },
+  { to: '/',           label: 'Dashboard',        icon: 'DB' },
+  { to: '/threats',    label: 'Threats',          icon: 'TH' },
+  { to: '/alerts',     label: 'Alerts',           icon: 'AL' },
+  { to: '/incidents',  label: 'Incidents',        icon: 'IC' },
+  { to: '/email',      label: 'Phân tích email',  icon: 'EM' },
+  { to: '/baseline',   label: 'So sánh model',    icon: 'ML' },
+  { to: '/statistics', label: 'Báo cáo',          icon: 'RP' },
+  { to: '/rules',      label: 'Rule Engine',      icon: 'RL' },
+  { to: '/users',      label: 'Người dùng',       icon: 'US' },
 ]
 
 export function Sidebar() {
@@ -33,7 +35,7 @@ export function Sidebar() {
     fontSize: 14,
     fontWeight: 500,
     color: isActive ? '#fff' : '#9ca3af',
-    background: isActive ? '#3b82f6' : 'transparent',
+    background: isActive ? '#2563eb' : 'transparent',
     transition: 'all 0.15s',
   })
 
@@ -48,23 +50,23 @@ export function Sidebar() {
       gap: 4,
       flexShrink: 0,
     }}>
-      <div style={{ padding: '0 8px 24px', color: '#fff', fontSize: 18, fontWeight: 700 }}>
-        🛡️ SecureAI
+      <div style={{ padding: '0 8px 24px', color: '#fff', fontSize: 18, fontWeight: 800 }}>
+        SecureAI
       </div>
 
       {navItems.map(({ to, label, icon }) => (
         <NavLink key={to} to={to} end={to === '/'} style={({ isActive }) => linkStyle(isActive)}>
-          <span>{icon}</span>
+          <span style={{ fontSize: 11, width: 24, color: '#93c5fd', fontWeight: 800 }}>{icon}</span>
           <span>{label}</span>
           {label === 'Alerts' && unread > 0 && (
             <span style={{
               marginLeft: 'auto',
-              background: '#ef4444',
+              background: '#dc2626',
               color: '#fff',
               borderRadius: 999,
               fontSize: 11,
               padding: '1px 7px',
-              fontWeight: 700,
+              fontWeight: 800,
             }}>
               {unread}
             </span>
@@ -81,7 +83,7 @@ export function Sidebar() {
           style={{
             background: 'transparent',
             border: '1px solid #374151',
-            color: '#9ca3af',
+            color: '#d1d5db',
             borderRadius: 8,
             padding: '8px 16px',
             fontSize: 13,
@@ -90,7 +92,7 @@ export function Sidebar() {
             textAlign: 'left',
           }}
         >
-          🚪 Đăng xuất
+          Đăng xuất
         </button>
       </div>
     </aside>

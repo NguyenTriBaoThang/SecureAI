@@ -17,11 +17,11 @@ export function useAlertHub(onNewAlert?: (alert: AlertDto) => void) {
       if (stopped) return
 
       const connection = new signalR.HubConnectionBuilder()
-        .withUrl('/hubs/alerts', {
+        .withUrl(import.meta.env.VITE_ALERT_HUB_URL || '/hubs/alerts', {
           accessTokenFactory: () => token,
         })
         .withAutomaticReconnect([2000, 5000, 10000, 30000])
-        .configureLogging(signalR.LogLevel.Error)   // bỏ Warning spam
+        .configureLogging(signalR.LogLevel.Error)
         .build()
 
       connection.on('NewAlert', (alert: AlertDto) => {
@@ -30,7 +30,6 @@ export function useAlertHub(onNewAlert?: (alert: AlertDto) => void) {
 
       connection.onclose(() => {
         setConnected(false)
-        // Thử lại sau 15s nếu chưa unmount
         if (!stopped) {
           retryRef.current = setTimeout(connect, 15000)
         }
@@ -42,7 +41,6 @@ export function useAlertHub(onNewAlert?: (alert: AlertDto) => void) {
       connection.start()
         .then(() => setConnected(true))
         .catch(() => {
-          // Backend chưa chạy — thử lại sau 10s, không log lên console
           if (!stopped) {
             retryRef.current = setTimeout(connect, 10000)
           }
@@ -58,7 +56,7 @@ export function useAlertHub(onNewAlert?: (alert: AlertDto) => void) {
       if (retryRef.current) clearTimeout(retryRef.current)
       connectionRef.current?.stop().catch(() => {})
     }
-  }, [])
+  }, [onNewAlert])
 
   return { connected }
 }

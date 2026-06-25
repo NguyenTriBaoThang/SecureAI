@@ -1,4 +1,6 @@
+﻿using secureai_backend.DTOs.Incident;
 using secureai_backend.DTOs.ML;
+using secureai_backend.DTOs.RuleEngine;
 using secureai_backend.Models.Enums;
 
 namespace secureai_backend.DTOs.Threat;
@@ -15,5 +17,12 @@ public record ThreatDto(
     List<AttentionToken> TopAttention,
     ThreatStatus Status,
     ThreatSeverity Severity,
-    DateTime DetectedAt
+    DateTime DetectedAt,
+    RuleEvaluationDto RuleEvaluation,
+    ThreatIntelEnrichmentDto Enrichment,
+    DecisionSupportDto DecisionSupport,
+    RiskExplanationDto RiskExplanation,
+    IncidentSummaryDto? Incident,
+    List<AnalystNoteDto> AnalystNotes
 );
+

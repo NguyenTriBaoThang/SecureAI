@@ -42,14 +42,26 @@ namespace secureai_backend.Migrations
                     b.Property<int>("Severity")
                         .HasColumnType("int");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("ThreatId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("WorkflowNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("IsRead");
 
                     b.HasIndex("Severity");
+
+                    b.HasIndex("Status");
 
                     b.HasIndex("ThreatId");
 
@@ -123,6 +135,73 @@ namespace secureai_backend.Migrations
                     b.ToTable("AuditLogs");
                 });
 
+            modelBuilder.Entity("secureai_backend.Models.Entities.Incident", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AssignedToUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DecisionReason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RecommendedAction")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("ThreatId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedToUserId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Priority");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("ThreatId")
+                        .IsUnique();
+
+                    b.ToTable("Incidents");
+                });
+
             modelBuilder.Entity("secureai_backend.Models.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -154,6 +233,52 @@ namespace secureai_backend.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("secureai_backend.Models.Entities.RuleConfiguration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("AutoAlertEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AutoBlockEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("BlockMaliciousLabels")
+                        .HasColumnType("bit");
+
+                    b.Property<double>("BlockThreshold")
+                        .HasColumnType("float");
+
+                    b.Property<double>("ReviewThreshold")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.ToTable("RuleConfigurations");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
+                            AutoAlertEnabled = true,
+                            AutoBlockEnabled = true,
+                            BlockMaliciousLabels = true,
+                            BlockThreshold = 0.84999999999999998,
+                            ReviewThreshold = 0.45000000000000001,
+                            UpdatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        });
                 });
 
             modelBuilder.Entity("secureai_backend.Models.Entities.Threat", b =>
@@ -304,6 +429,24 @@ namespace secureai_backend.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("secureai_backend.Models.Entities.Incident", b =>
+                {
+                    b.HasOne("secureai_backend.Models.Entities.User", "AssignedTo")
+                        .WithMany()
+                        .HasForeignKey("AssignedToUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("secureai_backend.Models.Entities.Threat", "Threat")
+                        .WithMany("Incidents")
+                        .HasForeignKey("ThreatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AssignedTo");
+
+                    b.Navigation("Threat");
+                });
+
             modelBuilder.Entity("secureai_backend.Models.Entities.RefreshToken", b =>
                 {
                     b.HasOne("secureai_backend.Models.Entities.User", "User")
@@ -315,11 +458,23 @@ namespace secureai_backend.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("secureai_backend.Models.Entities.RuleConfiguration", b =>
+                {
+                    b.HasOne("secureai_backend.Models.Entities.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("UpdatedByUser");
+                });
+
             modelBuilder.Entity("secureai_backend.Models.Entities.Threat", b =>
                 {
                     b.Navigation("Alerts");
 
                     b.Navigation("AnalystLabels");
+
+                    b.Navigation("Incidents");
                 });
 
             modelBuilder.Entity("secureai_backend.Models.Entities.User", b =>

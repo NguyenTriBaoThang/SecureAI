@@ -427,3 +427,10 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# SecureAI local/runtime artifacts
+*.tsbuildinfo
+**/dist/
+secureai_backend/.env
+secureai_ai/.env
+secureai_frontend/.env

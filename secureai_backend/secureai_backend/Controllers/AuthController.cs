@@ -10,7 +10,6 @@ namespace secureai_backend.Controllers;
 [Route("api/auth")]
 public class AuthController(AuthService authService) : ControllerBase
 {
-    /// <summary>Đăng nhập → JWT AccessToken + RefreshToken</summary>
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest req)
     {
@@ -25,7 +24,27 @@ public class AuthController(AuthService authService) : ControllerBase
         }
     }
 
-    /// <summary>Lấy thông tin user đang đăng nhập</summary>
+    [HttpPost("refresh")]
+    public async Task<ActionResult<LoginResponse>> Refresh([FromBody] RefreshRequest req)
+    {
+        try
+        {
+            var result = await authService.RefreshAsync(req.RefreshToken);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] RefreshRequest req)
+    {
+        await authService.LogoutAsync(req.RefreshToken);
+        return NoContent();
+    }
+
     [HttpGet("me")]
     [Authorize]
     public ActionResult<MeResponse> Me()

@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>secureai_backend</RootNamespace>
+    <UserSecretsId>secureai-backend-dev</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
