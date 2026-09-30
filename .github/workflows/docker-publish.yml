@@ -90,7 +90,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: 🚀 Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           body: |
             ## 🛡️ SecureAI ${{ github.ref_name }} — AI-Powered Cybersecurity SOC Platform
