@@ -1,0 +1,41 @@
+name-template: "SecureAI v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+template: |
+  ## 🛡️ SecureAI $RESOLVED_VERSION
+
+  $CHANGES
+
+  ### 📦 Docker Images
+  ```bash
+  docker pull ghcr.io/nguyentribaothang/secureai-frontend:$RESOLVED_VERSION
+  docker pull ghcr.io/nguyentribaothang/secureai-backend:$RESOLVED_VERSION
+  docker pull ghcr.io/nguyentribaothang/secureai-ai-server:$RESOLVED_VERSION
+  ```
+
+categories:
+  - title: "🚀 New Features"
+    labels: ["feature", "feat", "enhancement"]
+  - title: "🐛 Bug Fixes"
+    labels: ["fix", "bug", "bugfix"]
+  - title: "🧠 AI & Threat Intelligence"
+    labels: ["ai", "model", "ml", "detection"]
+  - title: "🛡️ Security Patches"
+    labels: ["security", "cve", "auth"]
+  - title: "📚 Documentation"
+    labels: ["documentation", "docs"]
+  - title: "⚙️ Maintenance & DevOps"
+    labels: ["chore", "refactor", "dependencies", "docker"]
+
+version-resolver:
+  major:
+    labels: ["major", "breaking"]
+  minor:
+    labels: ["minor", "feature", "feat"]
+  patch:
+    labels: ["patch", "fix", "bug"]
+  default: patch
+
+exclude-labels:
+  - "skip-changelog"
+  - "duplicate"
+  - "question"

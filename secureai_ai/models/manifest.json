@@ -1,0 +1,142 @@
+{
+  "project": "SecureAI",
+  "primary_model": "Attention_BiLSTM.pt",
+  "generated_at": "2026-09-30T05:59:39.906754+00:00",
+  "python_version": "3.13",
+  "artifacts_count": 13,
+  "artifacts": {
+    "Attention_BiLSTM.pt": {
+      "sha256": "81a1193ab1098b85bc0b38a3f42c275ac1928cc96d9885e4c81fffddb71114c0",
+      "size_bytes": 1499321,
+      "size_kb": 1464.18
+    },
+    "BiLSTM.pt": {
+      "sha256": "9b0ae4259766ab8eaea59123cce6b10ea6360d45ea30673a5635869cb038b9fe",
+      "size_bytes": 1230897,
+      "size_kb": 1202.05
+    },
+    "char2idx.pkl": {
+      "sha256": "933ebde1f64175960213a025723d209250bde30a2d0736d8fc410b2408f503a4",
+      "size_bytes": 2312,
+      "size_kb": 2.26
+    },
+    "config.json": {
+      "sha256": "fba0de45a997c1bd7ced674592248032dac799770b03156d0c9a5691d86d10ad",
+      "size_bytes": 293,
+      "size_kb": 0.29
+    },
+    "label_encoder.pkl": {
+      "sha256": "01bb0029fe31bea11344a9e93dff380dca267d3abc3bae03aa8661439a90edd5",
+      "size_bytes": 286,
+      "size_kb": 0.28
+    },
+    "LSTM.pt": {
+      "sha256": "17f3735714f0ecf997b33c4d2c6f19ea663d670606f45a25e66ddd875654fd66",
+      "size_bytes": 699562,
+      "size_kb": 683.17
+    },
+    "manifest.json": {
+      "sha256": "00365d9996f2e19d9727d806cfc98323e63edcbb7b7f5be597ade5c64742a54a",
+      "size_bytes": 4008,
+      "size_kb": 3.91
+    },
+    "model_comparison.csv": {
+      "sha256": "dca05b61fd9d339b21df3fe9e5ba195566aa225d04b7f50a09dae556b6e6fb3b",
+      "size_bytes": 810,
+      "size_kb": 0.79
+    },
+    "model_metadata.json": {
+      "sha256": "46e7f25fe890b8b3376b94a809be5ed19e6fd687cb896517b3e3e4cf0fcb1093",
+      "size_bytes": 1530,
+      "size_kb": 1.49
+    },
+    "RNN.pt": {
+      "sha256": "ca7e7e1e786f96dca68ea59c4114e9d0036ed3d711f5f282555dc216683cbd06",
+      "size_bytes": 303261,
+      "size_kb": 296.15
+    },
+    "secureai_bilstm_attention.pt": {
+      "sha256": "4c701a3077fa481fe210d9c151208c1f1bae2e7e75afa57c5a3580063b44c426",
+      "size_bytes": 3019447,
+      "size_kb": 2948.68
+    },
+    "tokenizer.json": {
+      "sha256": "f558e091e95bf793e0a91e89f54a8e65fc1341cd725cbcbecf6fcf89ee5fb518",
+      "size_bytes": 3439,
+      "size_kb": 3.36
+    },
+    "tokenizer.pkl": {
+      "sha256": "68886e49cfd9cfaa705f24c17e5221c7329031eba811702cb5cc53e13a82ce4b",
+      "size_bytes": 7295,
+      "size_kb": 7.12
+    }
+  },
+  "training_metadata": {
+    "project": "SecureAI",
+    "model_version": "secureai_bilstm_attention_v1",
+    "architecture": "BiLSTM + Self-Attention (PyTorch)",
+    "proposed_model": "BiLSTM_Attention",
+    "selected_model": "BiLSTM_Attention",
+    "label_classes": [
+      "benign",
+      "defacement",
+      "malware",
+      "phishing"
+    ],
+    "num_classes": 4,
+    "max_len": 50,
+    "max_words": 200,
+    "embed_dim": 128,
+    "hidden_dim": 128,
+    "num_layers": 2,
+    "epochs_trained": 30,
+    "dataset_size": 319677,
+    "train_size": 255741,
+    "test_size": 63936,
+    "all_metrics": [
+      {
+        "model_name": "BiLSTM_Attention",
+        "accuracy": 0.9379,
+        "f1_weighted": 0.9366,
+        "f1_macro": 0.9181,
+        "roc_auc": 0.9854
+      },
+      {
+        "model_name": "XGBoost",
+        "accuracy": 0.9106,
+        "f1_weighted": 0.9064,
+        "f1_macro": 0.8804,
+        "roc_auc": 0.9758
+      },
+      {
+        "model_name": "LightGBM",
+        "accuracy": 0.9182,
+        "f1_weighted": 0.9211,
+        "f1_macro": 0.9086,
+        "roc_auc": 0.9848
+      },
+      {
+        "model_name": "RandomForest",
+        "accuracy": 0.8383,
+        "f1_weighted": 0.8458,
+        "f1_macro": 0.8214,
+        "roc_auc": 0.9432
+      }
+    ],
+    "best_metrics": {
+      "model_name": "BiLSTM_Attention",
+      "accuracy": 0.9379,
+      "f1_weighted": 0.9366,
+      "f1_macro": 0.9181,
+      "roc_auc": 0.9854
+    },
+    "training_history": {
+      "final_train_loss": 0.0906,
+      "final_val_loss": 0.183,
+      "final_train_acc": 0.9663,
+      "final_val_acc": 0.9386
+    },
+    "generated_at": "2026-05-10T09:04:46.547913+07:00",
+    "device": "cpu"
+  }
+}

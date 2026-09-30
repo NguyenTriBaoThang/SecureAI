@@ -1,0 +1,44 @@
+version: 2
+updates:
+  # Frontend: npm
+  - package-ecosystem: "npm"
+    directory: "/secureai_frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels: ["dependencies", "frontend"]
+    open-pull-requests-limit: 5
+
+  # Backend: NuGet (.NET 10)
+  - package-ecosystem: "nuget"
+    directory: "/secureai_backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels: ["dependencies", "backend"]
+    open-pull-requests-limit: 5
+
+  # AI Server: pip (FastAPI + PyTorch)
+  - package-ecosystem: "pip"
+    directory: "/secureai_ai"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels: ["dependencies", "ai-server"]
+    open-pull-requests-limit: 5
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels: ["dependencies", "github-actions"]
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels: ["dependencies", "docker"]
