@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using secureai_backend.Models.Entities;
 
 namespace secureai_backend.Data;
@@ -13,6 +13,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<RuleConfiguration> RuleConfigurations => Set<RuleConfiguration>();
+    public DbSet<UserSettings> UserSettings => Set<UserSettings>();
+    public DbSet<ScanLog> ScanLogs => Set<ScanLog>();
+    public DbSet<UrlDataset> UrlDatasets => Set<UrlDataset>();
+    public DbSet<UrlFeedback> UrlFeedbacks => Set<UrlFeedback>();
+    public DbSet<ModelRegistry> ModelRegistries => Set<ModelRegistry>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -122,6 +127,78 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .WithMany()
              .HasForeignKey(r => r.UserId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<UserSettings>(e =>
+        {
+            e.HasKey(s => s.UserId);
+            e.Property(s => s.Mode).HasMaxLength(20);
+            e.Property(s => s.WhitelistJson).HasColumnType("nvarchar(max)");
+            e.Property(s => s.BlacklistJson).HasColumnType("nvarchar(max)");
+            e.HasOne(s => s.User)
+             .WithOne()
+             .HasForeignKey<UserSettings>(s => s.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<ScanLog>(e =>
+        {
+            e.HasKey(l => l.Id);
+            e.Property(l => l.Url).IsRequired().HasMaxLength(2048);
+            e.Property(l => l.Title).HasMaxLength(512);
+            e.Property(l => l.Label).HasMaxLength(64);
+            e.Property(l => l.RiskLevel).HasMaxLength(16);
+            e.Property(l => l.Action).HasMaxLength(16);
+            e.Property(l => l.Source).HasMaxLength(32);
+            e.Property(l => l.ExplanationJson).HasColumnType("nvarchar(max)");
+            e.HasIndex(l => l.CreatedAt);
+            e.HasIndex(l => l.Action);
+            e.HasIndex(l => l.Label);
+            e.HasOne(l => l.User)
+             .WithMany()
+             .HasForeignKey(l => l.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<UrlDataset>(e =>
+        {
+            e.HasKey(d => d.Id);
+            e.Property(d => d.Url).IsRequired().HasMaxLength(2048);
+            e.Property(d => d.Host).HasMaxLength(512);
+            e.Property(d => d.PredictedLabel).HasMaxLength(64);
+            e.Property(d => d.FinalLabel).HasMaxLength(64);
+            e.Property(d => d.Status).HasMaxLength(16);
+            e.Property(d => d.Source).HasMaxLength(32);
+            e.HasIndex(d => d.Url).IsUnique();
+            e.HasIndex(d => d.Status);
+            e.HasIndex(d => d.LastSeenAt);
+            e.HasOne(d => d.VerifiedByUser)
+             .WithMany()
+             .HasForeignKey(d => d.VerifiedByUserId)
+             .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        mb.Entity<UrlFeedback>(e =>
+        {
+            e.HasKey(f => f.Id);
+            e.Property(f => f.Url).IsRequired().HasMaxLength(2048);
+            e.Property(f => f.FeedbackLabel).HasMaxLength(64);
+            e.Property(f => f.Note).HasMaxLength(512);
+            e.HasIndex(f => f.CreatedAt);
+            e.HasOne(f => f.User)
+             .WithMany()
+             .HasForeignKey(f => f.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<ModelRegistry>(e =>
+        {
+            e.HasKey(m => m.Id);
+            e.Property(m => m.Name).HasMaxLength(100);
+            e.Property(m => m.Version).HasMaxLength(50);
+            e.Property(m => m.Status).HasMaxLength(64);
+            e.Property(m => m.MetricsJson).HasColumnType("nvarchar(max)");
+            e.HasIndex(m => m.CreatedAt);
         });
         mb.Entity<RuleConfiguration>(e =>
         {

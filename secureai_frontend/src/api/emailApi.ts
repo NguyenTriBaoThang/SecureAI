@@ -58,10 +58,36 @@ export interface BaselineResponse {
   summary:        Record<string, string>
 }
 
+export interface ExtractedEmailData {
+  from?: string
+  to?: string
+  subject?: string
+  body?: string
+}
+
 export const emailApi = {
   analyze: async (req: EmailAnalyzeRequest): Promise<EmailAnalyzeResponse> => {
     const res = await api.post<EmailAnalyzeResponse>('/email/analyze', req)
     return res.data
+  },
+  extractFromFile: async (file: File): Promise<ExtractedEmailData> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    try {
+      const res = await api.post<ExtractedEmailData>('/email/extract', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return res.data
+    } catch {
+      // Fallback: Nếu backend chưa cấu hình proxy sang ML, gọi trực tiếp endpoint ML đã cấu hình
+      const mlUrl = import.meta.env.VITE_ML_API_URL || 'http://localhost:8000'
+      const response = await fetch(`${mlUrl}/extract/email`, { method: 'POST', body: formData })
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err.detail ?? 'Không trích xuất được email từ tệp.')
+      }
+      return await response.json()
+    }
   },
 }
 

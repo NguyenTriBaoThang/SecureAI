@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { threatApi } from '../../api/threatApi'
@@ -62,7 +62,7 @@ export function ThreatDetailPage() {
   ]
 
   return (
-    <div style={{ maxWidth: 1180 }}>
+    <div style={{ width: '100%' }}>
       <button onClick={() => navigate('/threats')} style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontSize: 14, marginBottom: 16, padding: 0 }}>
         Quay lại danh sách threat
       </button>

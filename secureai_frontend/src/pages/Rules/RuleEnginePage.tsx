@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ruleEngineApi, type RuleConfiguration } from '../../api/ruleEngineApi'
+import { Sliders, Save, CheckCircle2, AlertTriangle, ShieldAlert, Sparkles, RefreshCw } from 'lucide-react'
 
 const toggleStyle = (enabled: boolean): React.CSSProperties => ({
-  width: 44,
-  height: 24,
+  width: 46,
+  height: 26,
   borderRadius: 999,
   border: 'none',
-  background: enabled ? '#2563eb' : '#d1d5db',
+  background: enabled ? 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)' : 'rgba(255, 255, 255, 0.15)',
+  boxShadow: enabled ? '0 0 12px rgba(56, 189, 248, 0.45)' : 'none',
   cursor: 'pointer',
   position: 'relative',
   flexShrink: 0,
+  transition: 'background 0.2s ease, box-shadow 0.2s ease',
 })
 
 export function RuleEnginePage() {
@@ -26,7 +29,7 @@ export function RuleEnginePage() {
         setConfig(res)
         setDraft(res)
       })
-      .catch(() => setError('Không tải được cấu hình rule engine.'))
+      .catch(() => setError('Không tải được cấu hình Rule Engine. Vui lòng kiểm tra dịch vụ backend.'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -66,146 +69,232 @@ export function RuleEnginePage() {
       })
       setConfig(updated)
       setDraft(updated)
-      setMessage('Đã lưu cấu hình rule engine.')
-      setTimeout(() => setMessage(''), 3000)
+      setMessage('Đã lưu cấu hình Rule Engine thành công.')
+      setTimeout(() => setMessage(''), 3500)
     } catch (e: unknown) {
-      setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Không lưu được cấu hình.')
+      setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Không thể lưu cấu hình Rule Engine.')
     } finally {
       setSaving(false)
     }
   }
 
   if (loading) {
-    return <div style={{ padding: 40, color: '#6b7280' }}>Đang tải cấu hình...</div>
+    return (
+      <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+        <RefreshCw size={20} className="saiSpin" />
+        <span>Đang tải cấu hình Rule Engine...</span>
+      </div>
+    )
   }
 
   if (!draft) {
-    return <div style={{ padding: 40, color: '#dc2626' }}>{error || 'Không có cấu hình.'}</div>
+    return (
+      <div style={{ padding: 40, color: '#f87171', background: 'rgba(239, 68, 68, 0.1)', borderRadius: 12, border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+        {error || 'Không tìm thấy cấu hình quy tắc.'}
+      </div>
+    )
   }
 
   return (
-    <div style={{ maxWidth: 980 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 24 }}>
+    <div className="saiPage">
+      {/* Page Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', margin: '0 0 6px' }}>Rule Engine</h1>
-          <div style={{ fontSize: 13, color: '#6b7280' }}>
-            Cập nhật lần cuối: {new Date(draft.updatedAt).toLocaleString('vi-VN')}
-            {draft.updatedByEmail ? ` bởi ${draft.updatedByEmail}` : ''}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <Sliders size={20} color="#38bdf8" />
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: '#ffffff', margin: 0, letterSpacing: '-0.02em' }}>
+              Quy tắc ra quyết định (Rule Engine)
+            </h1>
+          </div>
+          <div style={{ fontSize: 13, color: '#94a3b8' }}>
+            Điều chỉnh ngưỡng rủi ro và chính sách tự động hóa cho chu trình phản hồi của SOC Analyst.
+            {draft.updatedAt && (
+              <span style={{ marginLeft: 8, color: '#64748b' }}>
+                &bull; Cập nhật: {new Date(draft.updatedAt).toLocaleString('vi-VN')}
+                {draft.updatedByEmail ? ` bởi ${draft.updatedByEmail}` : ''}
+              </span>
+            )}
           </div>
         </div>
+
         <button
           onClick={save}
           disabled={!changed || saving}
-          style={{
-            background: !changed || saving ? '#bfdbfe' : '#2563eb',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 8,
-            padding: '10px 18px',
-            fontSize: 14,
-            fontWeight: 700,
-            cursor: !changed || saving ? 'not-allowed' : 'pointer',
-            whiteSpace: 'nowrap',
-          }}
+          className="saiButton saiButtonPrimary"
+          style={{ opacity: !changed || saving ? 0.6 : 1 }}
         >
-          {saving ? 'Đang lưu...' : 'Lưu cấu hình'}
+          <Save size={16} />
+          <span>{saving ? 'Đang lưu...' : 'Lưu cấu hình'}</span>
         </button>
       </div>
 
-      {message && <Notice color="#166534" bg="#f0fdf4" border="#bbf7d0" text={message} />}
-      {error && <Notice color="#b91c1c" bg="#fef2f2" border="#fecaca" text={error} />}
+      {message && (
+        <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.35)', color: '#34d399', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
+          <CheckCircle2 size={18} />
+          <span>{message}</span>
+        </div>
+      )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 18 }}>
+      {error && (
+        <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.35)', color: '#f87171', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
+          <AlertTriangle size={18} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Threshold Panels */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20, marginBottom: 22 }}>
         <ThresholdPanel
-          title="Ngưỡng block"
+          title="Ngưỡng Chặn (Block Threshold)"
+          description="Điểm rủi ro (Risk Score) vượt ngưỡng này sẽ tự động đề xuất lệnh Chặn (Block)."
           value={draft.blockThreshold}
-          color="#dc2626"
+          color="#ef4444"
           onChange={value => updateDraft({ blockThreshold: value })}
         />
         <ThresholdPanel
-          title="Ngưỡng review"
+          title="Ngưỡng Xem xét (Review Threshold)"
+          description="Điểm rủi ro nằm giữa ngưỡng Review và Block sẽ đưa vào hàng đợi xác minh cho Analyst."
           value={draft.reviewThreshold}
-          color="#d97706"
+          color="#f59e0b"
           onChange={value => updateDraft({ reviewThreshold: value })}
         />
       </div>
 
-      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden', marginBottom: 18 }}>
+      {/* Automation Policies */}
+      <div className="saiCard" style={{ marginBottom: 22, overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(15, 23, 42, 0.6)' }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Sparkles size={16} color="#38bdf8" />
+            <span>Chính sách tự động hóa (Automation Policies)</span>
+          </h2>
+        </div>
+
         <ToggleRow
-          label="Tự động block"
-          detail="Risk score vượt ngưỡng block sẽ nhận action Block."
+          label="Tự động áp dụng lệnh Chặn (Auto-Block)"
+          detail="Khi điểm rủi ro vượt ngưỡng Block, hệ thống tự động gán hành động Block và kích hoạt phản hồi tức thì."
           enabled={draft.autoBlockEnabled}
           onToggle={() => updateDraft({ autoBlockEnabled: !draft.autoBlockEnabled })}
         />
         <ToggleRow
-          label="Tạo alert tự động"
-          detail="Threat High/Critical hoặc rule Block sẽ sinh alert."
+          label="Tự động tạo cảnh báo SOC (Auto-Alert Generation)"
+          detail="Các phát hiện có mức độ High/Critical hoặc vượt ngưỡng Block sẽ tự động tạo Alert và thông báo real-time qua SignalR."
           enabled={draft.autoAlertEnabled}
           onToggle={() => updateDraft({ autoAlertEnabled: !draft.autoAlertEnabled })}
         />
         <ToggleRow
-          label="Ưu tiên nhãn độc hại"
-          detail="Phishing, malware, defacement được đẩy lên Block khi risk sát ngưỡng."
+          label="Ưu tiên nâng mức nhãn độc hại (Malicious Labels Priority)"
+          detail="Các URL được phân loại là Phishing, Malware hoặc Defacement sẽ được ưu tiên đưa vào diện Block ngay cả khi điểm rủi ro tiệm cận ngưỡng."
           enabled={draft.blockMaliciousLabels}
           onToggle={() => updateDraft({ blockMaliciousLabels: !draft.blockMaliciousLabels })}
           last
         />
       </div>
 
-      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: 18 }}>
-        <h2 style={{ fontSize: 14, fontWeight: 700, color: '#374151', margin: '0 0 14px' }}>Mốc hành động hiện tại</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-          <ActionBand title="Allow" range={`0% - ${(draft.reviewThreshold * 100).toFixed(0)}%`} color="#059669" />
-          <ActionBand title="Review" range={`${(draft.reviewThreshold * 100).toFixed(0)}% - ${(draft.blockThreshold * 100).toFixed(0)}%`} color="#d97706" />
-          <ActionBand title="Block" range={`>= ${(draft.blockThreshold * 100).toFixed(0)}%`} color="#dc2626" />
+      {/* Decision Action Bands */}
+      <div className="saiCard saiCardPad">
+        <h2 style={{ fontSize: 15, fontWeight: 700, color: '#f8fafc', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <ShieldAlert size={17} color="#38bdf8" />
+          <span>Vùng hành động rủi ro hiện tại (Decision Bands)</span>
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+          <ActionBand
+            title="Cho phép (Allow)"
+            desc="URL an toàn, nguy cơ thấp"
+            range={`0% - ${(draft.reviewThreshold * 100).toFixed(0)}%`}
+            color="#10b981"
+          />
+          <ActionBand
+            title="Xem xét (Review)"
+            desc="Cần Analyst kiểm tra và phân tích sâu"
+            range={`${(draft.reviewThreshold * 100).toFixed(0)}% - ${(draft.blockThreshold * 100).toFixed(0)}%`}
+            color="#f59e0b"
+          />
+          <ActionBand
+            title="Chặn (Block)"
+            desc="Nguy cơ cao, độc hại rõ rệt"
+            range={`>= ${(draft.blockThreshold * 100).toFixed(0)}%`}
+            color="#ef4444"
+          />
         </div>
       </div>
     </div>
   )
 }
 
-function Notice({ text, color, bg, border }: { text: string; color: string; bg: string; border: string }) {
-  return (
-    <div style={{ background: bg, border: `1px solid ${border}`, color, borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 16 }}>
-      {text}
-    </div>
-  )
-}
-
-function ThresholdPanel({ title, value, color, onChange }: {
+function ThresholdPanel({
+  title,
+  description,
+  value,
+  color,
+  onChange,
+}: {
   title: string
+  description: string
   value: number
   color: string
   onChange: (value: number) => void
 }) {
   const percent = Math.round(value * 100)
   return (
-    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: 18 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h2 style={{ fontSize: 14, fontWeight: 700, color: '#374151', margin: 0 }}>{title}</h2>
-        <span style={{ fontSize: 24, fontWeight: 800, color }}>{percent}%</span>
+    <div className="saiCard saiCardPad">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+        <div>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', margin: '0 0 4px' }}>{title}</h2>
+          <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.45, maxWidth: 360 }}>{description}</div>
+        </div>
+        <span
+          style={{
+            fontSize: 26,
+            fontWeight: 800,
+            color,
+            textShadow: `0 0 16px ${color}40`,
+            padding: '2px 8px',
+            background: `${color}15`,
+            borderRadius: 8,
+            border: `1px solid ${color}35`,
+          }}
+        >
+          {percent}%
+        </span>
       </div>
-      <input
-        type="range"
-        min={0}
-        max={100}
-        value={percent}
-        onChange={e => onChange(Number(e.target.value) / 100)}
-        style={{ width: '100%', accentColor: color }}
-      />
-      <input
-        type="number"
-        min={0}
-        max={100}
-        value={percent}
-        onChange={e => onChange(Math.min(100, Math.max(0, Number(e.target.value))) / 100)}
-        style={{ width: 90, marginTop: 12, padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13 }}
-      />
+
+      <div style={{ marginTop: 16 }}>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={percent}
+          onChange={(e) => onChange(Number(e.target.value) / 100)}
+          style={{ width: '100%', accentColor: color, cursor: 'pointer' }}
+        />
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
+        <span style={{ fontSize: 12, color: '#64748b' }}>Nhập giá trị chính xác:</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            value={percent}
+            onChange={(e) => onChange(Math.min(100, Math.max(0, Number(e.target.value))) / 100)}
+            className="saiInput"
+            style={{ width: 75, padding: '6px 10px', fontSize: 13, textAlign: 'center' }}
+          />
+          <span style={{ color: '#94a3b8', fontSize: 13 }}>%</span>
+        </div>
+      </div>
     </div>
   )
 }
 
-function ToggleRow({ label, detail, enabled, onToggle, last = false }: {
+function ToggleRow({
+  label,
+  detail,
+  enabled,
+  onToggle,
+  last = false,
+}: {
   label: string
   detail: string
   enabled: boolean
@@ -213,32 +302,55 @@ function ToggleRow({ label, detail, enabled, onToggle, last = false }: {
   last?: boolean
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '15px 18px', borderBottom: last ? 'none' : '1px solid #f3f4f6' }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 18,
+        padding: '16px 20px',
+        borderBottom: last ? 'none' : '1px solid rgba(255, 255, 255, 0.06)',
+      }}
+    >
       <button type="button" onClick={onToggle} style={toggleStyle(enabled)} aria-label={label}>
-        <span style={{
-          position: 'absolute',
-          width: 18,
-          height: 18,
-          borderRadius: '50%',
-          background: '#fff',
-          top: 3,
-          left: enabled ? 23 : 3,
-          transition: 'left 0.15s',
-        }} />
+        <span
+          style={{
+            position: 'absolute',
+            width: 20,
+            height: 20,
+            borderRadius: '50%',
+            background: '#ffffff',
+            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.35)',
+            top: 3,
+            left: enabled ? 23 : 3,
+            transition: 'left 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
+        />
       </button>
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{label}</div>
-        <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>{detail}</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9' }}>{label}</div>
+        <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 3, lineHeight: 1.45 }}>{detail}</div>
       </div>
     </div>
   )
 }
 
-function ActionBand({ title, range, color }: { title: string; range: string; color: string }) {
+function ActionBand({ title, desc, range, color }: { title: string; desc: string; range: string; color: string }) {
   return (
-    <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 14, borderTop: `3px solid ${color}` }}>
-      <div style={{ fontSize: 13, fontWeight: 800, color }}>{title}</div>
-      <div style={{ fontSize: 20, fontWeight: 800, color: '#111827', marginTop: 6 }}>{range}</div>
+    <div
+      style={{
+        background: 'rgba(15, 23, 42, 0.75)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        borderRadius: 12,
+        padding: '16px 18px',
+        borderTop: `4px solid ${color}`,
+        boxShadow: `0 8px 20px -4px rgba(0, 0, 0, 0.4), 0 0 12px ${color}20`,
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 13, fontWeight: 800, color }}>{title}</span>
+        <span style={{ fontSize: 11, color: '#94a3b8' }}>{desc}</span>
+      </div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: '#ffffff', marginTop: 8 }}>{range}</div>
     </div>
   )
 }

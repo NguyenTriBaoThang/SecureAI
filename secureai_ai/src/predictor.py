@@ -7,7 +7,7 @@ from src.loader import ModelStore
 
 
 def tokenize(url: str, tokenizer: dict, max_len: int) -> torch.Tensor:
-    """Chuyển URL thành tensor token ids (character-level)."""
+    """ChuyÃ¡Â»Æ’n URL thÃƒÂ nh tensor token ids (character-level)."""
     clean  = clean_url(url)
     tokens = [tokenizer.get(c, 0) for c in clean[:max_len]]
     # Padding
@@ -17,28 +17,28 @@ def tokenize(url: str, tokenizer: dict, max_len: int) -> torch.Tensor:
 
 def predict_url(url: str) -> dict:
     """
-    Chạy inference cho 1 URL.
-    Trả về dict tương thích với MlBridgeService của .NET backend.
+    ChÃ¡ÂºÂ¡y inference cho 1 URL.
+    TrÃ¡ÂºÂ£ vÃ¡Â»Â dict tÃ†Â°Ã†Â¡ng thÃƒÂ­ch vÃ¡Â»â€ºi MlBridgeService cÃ¡Â»Â§a .NET backend.
     """
     store = ModelStore
     if not store.is_ready():
-        raise RuntimeError("Model chưa được load")
+        raise RuntimeError("Model chÃ†Â°a Ã„â€˜Ã†Â°Ã¡Â»Â£c load")
 
     # Tokenize
-    input_tensor = tokenize(url, store.tokenizer, MAX_LEN)
+    input_tensor = tokenize(url, store.tokenizer, MAX_LEN).to(store.device)
 
     # Inference
     with torch.no_grad():
         logits, attention_weights = store.model(input_tensor)
 
     # Probabilities
-    probs      = F.softmax(logits, dim=-1).squeeze(0).numpy()
-    classes    = store.label_encoder.classes_          # ['benign','defacement','malware','phishing']
+    probs      = F.softmax(logits, dim=-1).squeeze(0).detach().cpu().numpy()
+    classes    = [str(c) for c in store.label_encoder.classes_]
     label_idx  = int(np.argmax(probs))
-    label      = classes[label_idx]
+    label      = str(classes[label_idx])
     risk_score = float(1.0 - probs[list(classes).index("benign")])
 
-    # Map label → prob keys
+    # Map label Ã¢â€ â€™ prob keys
     prob_map = {c: float(probs[i]) for i, c in enumerate(classes)}
 
     # Action mapping
@@ -50,7 +50,7 @@ def predict_url(url: str) -> dict:
         action = "allow"
 
     # Top attention tokens
-    attn_weights = attention_weights.squeeze(0).numpy()
+    attn_weights = attention_weights.squeeze(0).detach().cpu().numpy()
     clean        = clean_url(url)
     n_chars      = min(len(clean), MAX_LEN)
     top_n        = 10
@@ -77,5 +77,5 @@ def predict_url(url: str) -> dict:
 
 
 def predict_batch(urls: list[str]) -> list[dict]:
-    """Predict nhiều URLs cùng lúc (vectorized)."""
+    """Predict nhiÃ¡Â»Âu URLs cÃƒÂ¹ng lÃƒÂºc (vectorized)."""
     return [predict_url(url) for url in urls]

@@ -202,6 +202,47 @@ namespace secureai_backend.Migrations
                     b.ToTable("Incidents");
                 });
 
+            modelBuilder.Entity("secureai_backend.Models.Entities.ModelRegistry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<double?>("Accuracy")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("F1Weighted")
+                        .HasColumnType("float");
+
+                    b.Property<string>("MetricsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.ToTable("ModelRegistries");
+                });
+
             modelBuilder.Entity("secureai_backend.Models.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -281,6 +322,67 @@ namespace secureai_backend.Migrations
                         });
                 });
 
+            modelBuilder.Entity("secureai_backend.Models.Entities.ScanLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ExplanationJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("RiskLevel")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<double>("Score")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Action");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Label");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ScanLogs");
+                });
+
             modelBuilder.Entity("secureai_backend.Models.Entities.Threat", b =>
                 {
                     b.Property<Guid>("Id")
@@ -340,6 +442,111 @@ namespace secureai_backend.Migrations
                     b.ToTable("Threats");
                 });
 
+            modelBuilder.Entity("secureai_backend.Models.Entities.UrlDataset", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FinalLabel")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("FirstSeenAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Host")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTime>("LastSeenAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PredictedLabel")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<double>("PredictedScore")
+                        .HasColumnType("float");
+
+                    b.Property<int>("SeenCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("VerifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LastSeenAt");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Url")
+                        .IsUnique();
+
+                    b.HasIndex("VerifiedByUserId");
+
+                    b.ToTable("UrlDatasets");
+                });
+
+            modelBuilder.Entity("secureai_backend.Models.Entities.UrlFeedback", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FeedbackLabel")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UrlFeedbacks");
+                });
+
             modelBuilder.Entity("secureai_backend.Models.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -386,6 +593,47 @@ namespace secureai_backend.Migrations
                             PasswordHash = "$2b$12$abcdefghijklmnopqrstuOeKVc0xgqRlBPeC3nbeIZwtICN7jsoWK",
                             Role = "Admin"
                         });
+                });
+
+            modelBuilder.Entity("secureai_backend.Models.Entities.UserSettings", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BlacklistJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("BlockAdult")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("BlockGambling")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("BlockPhishing")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ChildAge")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("WarnSuspicious")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("WhitelistJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("UserSettings");
                 });
 
             modelBuilder.Entity("secureai_backend.Models.Entities.Alert", b =>
@@ -466,6 +714,49 @@ namespace secureai_backend.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("UpdatedByUser");
+                });
+
+            modelBuilder.Entity("secureai_backend.Models.Entities.ScanLog", b =>
+                {
+                    b.HasOne("secureai_backend.Models.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("secureai_backend.Models.Entities.UrlDataset", b =>
+                {
+                    b.HasOne("secureai_backend.Models.Entities.User", "VerifiedByUser")
+                        .WithMany()
+                        .HasForeignKey("VerifiedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("VerifiedByUser");
+                });
+
+            modelBuilder.Entity("secureai_backend.Models.Entities.UrlFeedback", b =>
+                {
+                    b.HasOne("secureai_backend.Models.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("secureai_backend.Models.Entities.UserSettings", b =>
+                {
+                    b.HasOne("secureai_backend.Models.Entities.User", "User")
+                        .WithOne()
+                        .HasForeignKey("secureai_backend.Models.Entities.UserSettings", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("secureai_backend.Models.Entities.Threat", b =>

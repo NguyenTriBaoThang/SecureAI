@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -51,7 +51,7 @@ export function StatisticsPage() {
   const trendData = (stats.last30DaysTrend ?? []).map(d => ({ date: d.date.slice(5), count: d.count }))
 
   return (
-    <div style={{ maxWidth: 1120 }}>
+    <div style={{ width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#111827', margin: '0 0 6px' }}>Báo cáo & Thống kê</h1>

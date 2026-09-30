@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { userApi, type UserDto, type CreateUserRequest } from '../../api/userApi'
 
 const ROLES = ['Admin', 'Analyst', 'Viewer']
@@ -62,7 +62,7 @@ export function UsersPage() {
   }
 
   return (
-    <div style={{ maxWidth: 980 }}>
+    <div style={{ width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#111827', margin: '0 0 6px' }}>Quản lý người dùng</h1>

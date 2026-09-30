@@ -1,15 +1,18 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { alertApi } from '../../api/alertApi'
 import { Badge } from '../../components/ui/Badge'
 import type { AlertDto, AlertStatus, PagedResult } from '../../types'
-
-const severityColor: Record<string, string> = {
-  Critical: '#fef2f2',
-  High: '#fff7ed',
-  Medium: '#fefce8',
-  Info: '#eff6ff',
-}
+import {
+  BellRing,
+  CheckCheck,
+  Eye,
+  CheckCircle2,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  MessageSquare,
+} from 'lucide-react'
 
 export function AlertsPage() {
   const [data, setData] = useState<PagedResult<AlertDto> | null>(null)
@@ -51,81 +54,238 @@ export function AlertsPage() {
   const totalPages = data ? Math.max(1, Math.ceil(data.total / 20)) : 1
 
   return (
-    <div style={{ maxWidth: 1020 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
+    <div className="saiPage">
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 22, flexWrap: 'wrap', gap: 14 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#111827', margin: 0 }}>Alerts</h1>
-          <p style={{ fontSize: 13, color: '#6b7280', margin: '4px 0 0' }}>Workflow alert theo trạng thái mới, đang xử lý, đã xử lý hoặc false positive.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+            <BellRing size={22} color="#38bdf8" />
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: '#ffffff', margin: 0, letterSpacing: '-0.02em' }}>
+              Cảnh báo Thời gian thực (SOC Alerts)
+            </h1>
+          </div>
+          <div style={{ fontSize: 13, color: '#94a3b8' }}>
+            Theo dõi, phân luồng và xử lý cảnh báo phát hiện từ pipeline an ninh mạng.
+          </div>
         </div>
-        <button onClick={markAllRead} style={secondaryButton}>Đánh dấu tất cả đã đọc</button>
+
+        <button onClick={markAllRead} className="saiButton saiButtonSecondary" style={{ fontSize: 12 }}>
+          <CheckCheck size={16} color="#38bdf8" />
+          <span>Đánh dấu tất cả đã đọc</span>
+        </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
-          <input type="checkbox" checked={unreadOnly} onChange={e => { setUnreadOnly(e.target.checked); setPage(1) }} />
-          Chưa đọc
-        </label>
-        <select value={status} onChange={e => { setStatus(e.target.value); setPage(1) }} style={selectStyle}>
-          <option value="">Tất cả trạng thái</option>
-          <option value="New">Mới</option>
-          <option value="Investigating">Đang xử lý</option>
-          <option value="Resolved">Đã xử lý</option>
-          <option value="FalsePositive">False positive</option>
-        </select>
-        <span style={{ marginLeft: 'auto', fontSize: 13, color: '#6b7280' }}>{data?.total ?? 0} alert</span>
+      {/* Filter and Note Bar */}
+      <div
+        style={{
+          background: 'rgba(15, 23, 42, 0.7)',
+          padding: '14px 18px',
+          borderRadius: 14,
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          marginBottom: 20,
+        }}
+      >
+        <div style={{ display: 'flex', gap: 14, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#e2e8f0', cursor: 'pointer', userSelect: 'none' }}>
+            <input
+              type="checkbox"
+              checked={unreadOnly}
+              onChange={(e) => { setUnreadOnly(e.target.checked); setPage(1) }}
+              style={{ accentColor: '#38bdf8', width: 16, height: 16 }}
+            />
+            <span>Chỉ hiển thị chưa đọc</span>
+          </label>
+
+          <select
+            value={status}
+            onChange={(e) => { setStatus(e.target.value); setPage(1) }}
+            className="saiSelect"
+            style={{ width: 'auto', minWidth: 170 }}
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="New">Mới (New)</option>
+            <option value="Investigating">Đang xử lý (Investigating)</option>
+            <option value="Resolved">Đã giải quyết (Resolved)</option>
+            <option value="FalsePositive">Báo động giả (False positive)</option>
+          </select>
+
+          <span style={{ marginLeft: 'auto', fontSize: 12, color: '#94a3b8' }}>
+            Tổng số: <strong style={{ color: '#fff' }}>{data?.total ?? 0}</strong> cảnh báo
+          </span>
+        </div>
+
+        <div style={{ position: 'relative' }}>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Nhập ghi chú xử lý (sẽ được đính kèm khi chuyển trạng thái cảnh báo)..."
+            rows={2}
+            className="saiTextarea"
+            style={{ minHeight: 60, fontSize: 13, padding: '10px 14px' }}
+          />
+        </div>
       </div>
 
-      <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Ghi chú workflow khi cập nhật alert..." rows={2} style={{ width: '100%', boxSizing: 'border-box', marginBottom: 16, padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, resize: 'vertical' }} />
+      {/* Alert Cards List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {loading && (
+          <div style={{ textAlign: 'center', padding: 48, color: '#94a3b8', fontSize: 13 }}>
+            Đang tải danh sách cảnh báo...
+          </div>
+        )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {loading && <div style={{ textAlign: 'center', padding: 32, color: '#9ca3af' }}>Đang tải...</div>}
-
-        {!loading && data?.items.map(alert => (
-          <div key={alert.id} style={{ background: alert.isRead ? '#fff' : severityColor[alert.severity] ?? '#fff', border: `1px solid ${alert.isRead ? '#e5e7eb' : '#fed7aa'}`, borderRadius: 8, padding: '14px 16px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 12 }}>
+        {!loading && data?.items.map((alert) => (
+          <div
+            key={alert.id}
+            className="saiCard"
+            style={{
+              padding: '18px 20px',
+              borderLeft: alert.severity === 'Critical'
+                ? '4px solid #ef4444'
+                : alert.severity === 'High'
+                ? '4px solid #f97316'
+                : '4px solid #38bdf8',
+              boxShadow: !alert.isRead ? '0 8px 24px -4px rgba(56, 189, 248, 0.25), 0 0 0 1px rgba(56, 189, 248, 0.3)' : undefined,
+              display: 'grid',
+              gridTemplateColumns: 'minmax(0, 1fr) auto',
+              gap: 16,
+              alignItems: 'center',
+            }}
+          >
             <div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 6 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
                 <Badge type="severity" value={alert.severity} />
                 <Badge type="status" value={alert.status} />
-                {!alert.isRead && <span style={{ fontSize: 12, color: '#dc2626', fontWeight: 800 }}>Chưa đọc</span>}
+                {!alert.isRead && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 800,
+                      padding: '2px 7px',
+                      borderRadius: 999,
+                      background: 'rgba(239, 68, 68, 0.2)',
+                      color: '#f87171',
+                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                    }}
+                  >
+                    CHƯA ĐỌC
+                  </span>
+                )}
               </div>
-              <div style={{ fontSize: 14, color: '#111827', fontWeight: alert.isRead ? 500 : 800, marginBottom: 5 }}>{alert.message}</div>
-              <div style={{ fontSize: 12, color: '#6b7280' }}>
-                {new Date(alert.sentAt).toLocaleString('vi-VN')} - <span style={{ fontFamily: 'monospace' }}>{alert.threatUrl}</span>
+
+              <div style={{ fontSize: 14, fontWeight: alert.isRead ? 600 : 800, color: '#ffffff', marginBottom: 6, lineHeight: 1.45 }}>
+                {alert.message}
               </div>
-              {alert.workflowNote && <div style={{ marginTop: 6, fontSize: 12, color: '#374151' }}>Ghi chú: {alert.workflowNote}</div>}
+
+              <div style={{ fontSize: 12, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span>{new Date(alert.sentAt).toLocaleString('vi-VN')}</span>
+                <span>&bull;</span>
+                <span style={{ fontFamily: 'monospace', color: '#38bdf8', wordBreak: 'break-all' }}>
+                  {alert.threatUrl}
+                </span>
+              </div>
+
+              {alert.workflowNote && (
+                <div
+                  style={{
+                    marginTop: 8,
+                    fontSize: 12,
+                    color: '#cbd5e1',
+                    background: 'rgba(7, 11, 20, 0.6)',
+                    padding: '6px 12px',
+                    borderRadius: 6,
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <MessageSquare size={13} color="#94a3b8" />
+                  <span>Ghi chú xử lý: {alert.workflowNote}</span>
+                </div>
+              )}
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 142 }}>
-              <button onClick={() => navigate(`/threats/${alert.threatId}`)} style={buttonStyle('#fff', '#374151', '#d1d5db')}>Chi tiết threat</button>
-              {!alert.isRead && <button onClick={() => markRead(alert.id)} style={buttonStyle('#fff', '#374151', '#d1d5db')}>Đã đọc</button>}
-              <button onClick={() => updateStatus(alert.id, 'Investigating')} style={buttonStyle('#d97706', '#fff')}>Đang xử lý</button>
-              <button onClick={() => updateStatus(alert.id, 'Resolved')} style={buttonStyle('#059669', '#fff')}>Đã xử lý</button>
-              <button onClick={() => updateStatus(alert.id, 'FalsePositive')} style={buttonStyle('#6b7280', '#fff')}>False positive</button>
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 140 }}>
+              <button
+                onClick={() => navigate(`/threats/${alert.threatId}`)}
+                className="saiButton saiButtonSecondary"
+                style={{ padding: '6px 10px', fontSize: 11, minHeight: 30 }}
+              >
+                <Eye size={13} />
+                <span>Xem chi tiết</span>
+              </button>
+
+              {!alert.isRead && (
+                <button
+                  onClick={() => markRead(alert.id)}
+                  className="saiButton saiButtonGhost"
+                  style={{ padding: '6px 10px', fontSize: 11, minHeight: 30 }}
+                >
+                  <CheckCircle2 size={13} />
+                  <span>Đã đọc</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => updateStatus(alert.id, 'Investigating')}
+                className="saiButton saiButtonSecondary"
+                style={{ padding: '6px 10px', fontSize: 11, minHeight: 30, color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.4)' }}
+              >
+                <Clock size={13} />
+                <span>Đang xử lý</span>
+              </button>
+
+              <button
+                onClick={() => updateStatus(alert.id, 'Resolved')}
+                className="saiButton saiButtonSecondary"
+                style={{ padding: '6px 10px', fontSize: 11, minHeight: 30, color: '#34d399', borderColor: 'rgba(16, 185, 129, 0.4)' }}
+              >
+                <CheckCircle2 size={13} />
+                <span>Đã xử lý</span>
+              </button>
             </div>
           </div>
         ))}
 
         {!loading && !data?.items.length && (
-          <div style={{ textAlign: 'center', padding: 48, color: '#9ca3af', fontSize: 14, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8 }}>Không có alert nào</div>
+          <div
+            className="saiCard"
+            style={{ textAlign: 'center', padding: '50px 20px', color: '#94a3b8', fontSize: 14 }}
+          >
+            <CheckCircle2 size={36} color="#34d399" style={{ margin: '0 auto 12px', display: 'block' }} />
+            Không có cảnh báo nào trong danh mục này.
+          </div>
         )}
       </div>
 
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 20 }}>
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={pagerStyle}>Trước</button>
-          <span style={{ padding: '6px 14px', fontSize: 13, color: '#374151' }}>{page} / {totalPages}</span>
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={pagerStyle}>Tiếp</button>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 24 }}>
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="saiButton saiButtonSecondary"
+            style={{ minHeight: 34, padding: '6px 14px' }}
+          >
+            <ChevronLeft size={15} />
+            <span>Trước</span>
+          </button>
+          <span style={{ display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 13, color: '#94a3b8' }}>
+            {page} / {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="saiButton saiButtonSecondary"
+            style={{ minHeight: 34, padding: '6px 14px' }}
+          >
+            <span>Tiếp</span>
+            <ChevronRight size={15} />
+          </button>
         </div>
       )}
     </div>
   )
 }
-
-const selectStyle: React.CSSProperties = { padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, background: '#fff' }
-const secondaryButton: React.CSSProperties = { background: '#fff', border: '1px solid #d1d5db', borderRadius: 8, padding: '6px 14px', fontSize: 13, cursor: 'pointer', color: '#374151' }
-
-function buttonStyle(bg: string, color: string, border = 'transparent'): React.CSSProperties {
-  return { background: bg, color, border: `1px solid ${border}`, borderRadius: 6, padding: '5px 9px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }
-}
-
-const pagerStyle: React.CSSProperties = { padding: '6px 14px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer', background: '#fff' }

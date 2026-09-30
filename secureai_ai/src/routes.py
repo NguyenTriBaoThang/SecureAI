@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
 import io
+import csv
 
 from src.schemas import (
     PredictRequest, BatchPredictRequest, PredictResponse,
@@ -9,6 +10,10 @@ from src.schemas import (
 )
 from src.predictor import predict_url, predict_batch
 from src.loader import ModelStore
+from src.config import (
+    MODEL_FILE, TOKENIZER_FILE, MODEL_CONFIG_FILE, MODEL_COMPARISON_FILE,
+    MAX_LEN, THRESHOLD_BLOCK, THRESHOLD_ALERT,
+)
 from src.email_analyzer import (
     _parse_email, extract_header_features,
     extract_body_features, extract_urls, compute_email_risk_score,
@@ -25,22 +30,67 @@ def require_model_ready() -> None:
         raise HTTPException(503, "Model chua duoc load - kiem tra thu muc models/")
 
 
+def _to_float(value):
+    try:
+        return round(float(value), 6)
+    except (TypeError, ValueError):
+        return value
+
+
+def _benchmark_rows() -> list[dict]:
+    if not MODEL_COMPARISON_FILE.exists():
+        return []
+
+    with open(MODEL_COMPARISON_FILE, "r", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+
+    numeric_fields = {
+        "accuracy", "macro_f1", "weighted_f1", "recall_benign",
+        "recall_phishing", "recall_malware", "recall_defacement",
+        "parameters", "train_time_sec", "best_epoch",
+    }
+    normalized = []
+    for row in rows:
+        normalized.append({
+            key: _to_float(value) if key in numeric_fields else value
+            for key, value in row.items()
+        })
+    return normalized
+
+
 def model_metadata() -> dict:
     meta = ModelStore.metadata or {}
+    cfg = ModelStore.model_config or {}
+    benchmark = _benchmark_rows()
+    active_name = MODEL_FILE.stem.lower()
+    active_benchmark = next(
+        (row for row in benchmark if row.get("model", "").lower() in active_name),
+        benchmark[0] if benchmark else {},
+    )
+
+    classes = cfg.get("classes") or meta.get("label_classes", [])
+    best_metrics = meta.get("best_metrics", {})
+
     return {
-        "model_version": meta.get("model_version", "unknown"),
-        "architecture": meta.get("architecture", "BiLSTM + Self-Attention"),
-        "accuracy": meta.get("best_metrics", {}).get("accuracy"),
-        "f1_weighted": meta.get("best_metrics", {}).get("f1_weighted"),
-        "roc_auc": meta.get("best_metrics", {}).get("roc_auc"),
-        "label_classes": meta.get("label_classes", []),
-        "dataset_size": meta.get("dataset_size", 0),
-        "epochs_trained": meta.get("epochs_trained", 0),
-        "generated_at": meta.get("generated_at", ""),
-        "all_metrics": meta.get("all_metrics", []),
+        "model_file": MODEL_FILE.name,
+        "tokenizer_file": TOKENIZER_FILE.name,
+        "config_file": MODEL_CONFIG_FILE.name if MODEL_CONFIG_FILE.exists() else None,
+        "architecture": active_benchmark.get("model") or meta.get("architecture", "BiLSTM + Self-Attention"),
+        "accuracy": active_benchmark.get("accuracy") or best_metrics.get("accuracy"),
+        "f1_weighted": active_benchmark.get("weighted_f1") or best_metrics.get("f1_weighted"),
+        "macro_f1": active_benchmark.get("macro_f1"),
+        "label_classes": classes,
+        "max_len": cfg.get("max_len", MAX_LEN),
+        "vocab_size": cfg.get("vocab_size"),
+        "embed_dim": cfg.get("embed_dim"),
+        "hidden_dim": cfg.get("hidden_dim"),
+        "num_layers": cfg.get("num_layers"),
+        "thresholds": {
+            "alert": THRESHOLD_ALERT,
+            "block": THRESHOLD_BLOCK,
+        },
+        "benchmark": benchmark,
     }
-
-
 @router.get("/health")
 def health():
     return {

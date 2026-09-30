@@ -4,12 +4,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Load .env trước tất cả
+# Load .env before reading config values.
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    pass  # dotenv không bắt buộc, có thể set env thủ công
+    pass
 
 from src.config import HOST, PORT
 from src.loader import ModelStore
@@ -18,35 +18,31 @@ from src.routes import router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # ── Startup: load model ───────────────────────────────────────────────────
-    print("🚀 SecureAI ML API đang khởi động...")
+    print("SecureAI ML API starting...")
     try:
         ModelStore.load()
-        print("✅ Model ready — API sẵn sàng nhận request")
-    except FileNotFoundError as e:
-        print(f"⚠️  {e}")
-        print("   API sẽ khởi động nhưng /predict trả 503 cho đến khi có model files")
+        print("Model ready - API can receive requests")
+    except FileNotFoundError as exc:
+        print(f"Model file missing: {exc}")
+        print("API will start, but /predict returns 503 until model files exist")
     yield
-    # ── Shutdown ──────────────────────────────────────────────────────────────
-    print("🛑 Shutting down...")
+    print("SecureAI ML API shutting down...")
 
 
 app = FastAPI(
-    title       = "SecureAI ML API",
-    description = "BiLSTM + Self-Attention phishing URL detection",
-    version     = "1.0.0",
-    lifespan    = lifespan,
+    title="SecureAI ML API",
+    description="BiLSTM + Self-Attention phishing URL detection",
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
-# CORS — cho phép .NET backend gọi vào
 app.add_middleware(
     CORSMiddleware,
-    allow_origins  = ["*"],
-    allow_methods  = ["*"],
-    allow_headers  = ["*"],
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# Register routes
 app.include_router(router)
 
 
@@ -54,8 +50,8 @@ app.include_router(router)
 def root():
     return {
         "service": "SecureAI ML API",
-        "docs":    "/docs",
-        "health":  "/health",
+        "docs": "/docs",
+        "health": "/health",
         "predict": "POST /predict",
     }
 
